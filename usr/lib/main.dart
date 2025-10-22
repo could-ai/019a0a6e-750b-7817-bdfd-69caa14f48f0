@@ -7,114 +7,286 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'AI Trading Assistant',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      theme: ThemeData.dark().copyWith(
+        primaryColor: Colors.blueGrey[900],
+        scaffoldBackgroundColor: Colors.blueGrey[900],
+        cardColor: Colors.blueGrey[800],
+        colorScheme: ColorScheme.dark(
+          primary: Colors.tealAccent,
+          secondary: Colors.tealAccent,
+          onPrimary: Colors.black,
+          onSecondary: Colors.black,
+          surface: Colors.blueGrey[800]!,
+          onSurface: Colors.white,
+          background: Colors.blueGrey[900]!,
+          onBackground: Colors.white,
+          error: Colors.redAccent,
+          onError: Colors.black,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blueGrey[900],
+          elevation: 0,
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SignalScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+enum SignalType { buy, sell, hold }
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+class TradingSignal {
+  final String commodityName;
+  final SignalType signalType;
+  final String signalReason;
+  final String entryZone;
+  final String stopLoss;
+  final String target;
+  final String riskRewardRatio;
+  final String warning;
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  TradingSignal({
+    required this.commodityName,
+    required this.signalType,
+    required this.signalReason,
+    required this.entryZone,
+    required this.stopLoss,
+    required this.target,
+    required this.riskRewardRatio,
+    required this.warning,
+  });
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class SignalScreen extends StatefulWidget {
+  const SignalScreen({super.key});
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  State<SignalScreen> createState() => _SignalScreenState();
+}
+
+class _SignalScreenState extends State<SignalScreen> {
+  // Mock data based on your strategy blueprint
+  final List<TradingSignal> _signals = [
+    TradingSignal(
+      commodityName: 'RELIANCE',
+      signalType: SignalType.buy,
+      signalReason:
+          'The 50-day moving average (₹2,400) has crossed above the 200-day moving average (₹2,380), indicating a potential shift to a long-term bullish trend.',
+      entryZone: '₹2,405 - ₹2,410',
+      stopLoss: '₹2,356 (2% below entry)',
+      target: '₹2,505 (4% above entry)',
+      riskRewardRatio: '1:2',
+      warning: 'This is a lagging indicator. Confirm with current market volume. Trade with caution.',
+    ),
+    TradingSignal(
+      commodityName: 'NIFTY 50',
+      signalType: SignalType.sell,
+      signalReason:
+          'The 50-day moving average has crossed below the 200-day moving average, indicating a potential shift to a long-term bearish trend.',
+      entryZone: '₹18,500 - ₹18,510',
+      stopLoss: '₹18,880 (2% above entry)',
+      target: '₹17,760 (4% below entry)',
+      riskRewardRatio: '1:2',
+      warning: 'Confirm with other indicators before shorting. Market is volatile.',
+    ),
+     TradingSignal(
+      commodityName: 'BANKNIFTY',
+      signalType: SignalType.hold,
+      signalReason:
+          'No crossover detected. ADX is below 25, indicating a weak or sideways market.',
+      entryZone: 'N/A',
+      stopLoss: 'N/A',
+      target: 'N/A',
+      riskRewardRatio: 'N/A',
+      warning: 'Avoid taking new positions in a choppy market. Wait for a clear trend to emerge.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('AI Trading Signals'),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(8.0),
+        itemCount: _signals.length,
+        itemBuilder: (context, index) {
+          return SignalCard(signal: _signals[index]);
+        },
+      ),
+    );
+  }
+}
+
+class SignalCard extends StatelessWidget {
+  final TradingSignal signal;
+
+  const SignalCard({super.key, required this.signal});
+
+  Color _getSignalColor() {
+    switch (signal.signalType) {
+      case SignalType.buy:
+        return Colors.green;
+      case SignalType.sell:
+        return Colors.red;
+      case SignalType.hold:
+        return Colors.grey;
+    }
+  }
+
+  String _getSignalLabel() {
+    switch (signal.signalType) {
+      case SignalType.buy:
+        return 'STRONG BUY';
+      case SignalType.sell:
+        return 'STRONG SELL';
+      case SignalType.hold:
+        return 'HOLD';
+    }
+  }
+
+    IconData _getSignalIcon() {
+    switch (signal.signalType) {
+      case SignalType.buy:
+        return Icons.trending_up;
+      case SignalType.sell:
+        return Icons.trending_down;
+      case SignalType.hold:
+        return Icons.pause_circle_outline;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: _getSignalColor(), width: 1.5),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(theme),
+            const SizedBox(height: 12),
+            Text(
+              'Reason: ${signal.signalReason}',
+              style: theme.textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 16),
+            _buildActionPlan(theme),
+            const SizedBox(height: 16),
+            _buildWarning(theme),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildHeader(ThemeData theme) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          signal.commodityName,
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: _getSignalColor(),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Icon(_getSignalIcon(), color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                _getSignalLabel(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionPlan(ThemeData theme) {
+    if (signal.signalType == SignalType.hold) {
+      return Container();
+    }
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Action Plan', style: theme.textTheme.titleLarge),
+          const Divider(height: 20),
+          _buildInfoRow('Suggested Entry Zone:', signal.entryZone, theme),
+          _buildInfoRow('Stop-Loss:', signal.stopLoss, theme),
+          _buildInfoRow('Target:', signal.target, theme),
+          _buildInfoRow('Risk-Reward Ratio:', signal.riskRewardRatio, theme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+          Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWarning(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber, width: 1)
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              signal.warning,
+              style: theme.textTheme.bodySmall?.copyWith(color: Colors.amber[200]),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
